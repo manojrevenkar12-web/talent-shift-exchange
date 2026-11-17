@@ -1,0 +1,240 @@
+{
+ "world": "D1",
+ "weeks": 3,
+ "talents": 420,
+ "projects": [
+  "telco_de",
+  "energy_de",
+  "shop_en",
+  "insure_fr"
+ ],
+ "staffing": {
+  "fixed_roster": {
+   "service_level": 0.6675,
+   "abandoned_calls": 7509,
+   "calls": 77433,
+   "intervals_on_target": 0.6285,
+   "surge_service_level": 0.0263,
+   "talent_eur_per_logged_hour": 7.08,
+   "talent_hours": 12784,
+   "talent_eur": 90488,
+   "talents_under_half_of_ask": 0.2238,
+   "mean_fill": 0.6324,
+   "booked_over_need": 0.9639,
+   "noshows": 299,
+   "callout_offers": 0,
+   "callouts_taken": 0
+  },
+  "exchange_no_callouts": {
+   "service_level": 0.8184,
+   "abandoned_calls": 3997,
+   "calls": 77433,
+   "intervals_on_target": 0.7937,
+   "surge_service_level": 0.2361,
+   "talent_eur_per_logged_hour": 6.74,
+   "talent_hours": 14148,
+   "talent_eur": 95389,
+   "talents_under_half_of_ask": 0.031,
+   "mean_fill": 0.7062,
+   "booked_over_need": 1.0044,
+   "noshows": 355,
+   "callout_offers": 0,
+   "callouts_taken": 0
+  },
+  "exchange": {
+   "service_level": 0.9146,
+   "abandoned_calls": 1835,
+   "calls": 77433,
+   "intervals_on_target": 0.9152,
+   "surge_service_level": 0.5837,
+   "talent_eur_per_logged_hour": 6.21,
+   "talent_hours": 15898,
+   "talent_eur": 98736,
+   "talents_under_half_of_ask": 0.031,
+   "mean_fill": 0.7062,
+   "booked_over_need": 1.0044,
+   "noshows": 355,
+   "callout_offers": 3198,
+   "callouts_taken": 1098
+  }
+ },
+ "billing": {
+  "arrival_order": {
+   "overpaid_cents": 5040,
+   "underpaid_cents": 678562,
+   "talents_paid_wrong": 420,
+   "error_share": 0.08002
+  },
+  "product": {
+   "overpaid_cents": 0,
+   "underpaid_cents": 0,
+   "talents_paid_wrong": 0,
+   "error_share": 0.0
+  },
+  "_events": 352286,
+  "_duplicates": 13572,
+  "_sessions": 3537,
+  "_talents": 420,
+  "_true_cents": 8543309
+ },
+ "quality": {
+  "manual_sample": {
+   "breach_recall": 0.0521,
+   "promise_breach_recall": 0.0379,
+   "false_flags": 0,
+   "false_flag_rate": 0.0,
+   "calls_read_by_people": 155,
+   "reviewer_hours": 10.3,
+   "reviewer_share": 0.0515
+  },
+  "model_only": {
+   "breach_recall": 0.9751,
+   "promise_breach_recall": 0.8862,
+   "false_flags": 83,
+   "false_flag_rate": 0.009,
+   "calls_read_by_people": 0,
+   "reviewer_hours": 0.0,
+   "reviewer_share": 0.0
+  },
+  "product": {
+   "breach_recall": 1.0,
+   "promise_breach_recall": 1.0,
+   "false_flags": 3,
+   "false_flag_rate": 0.0003,
+   "calls_read_by_people": 540,
+   "reviewer_hours": 36.0,
+   "reviewer_share": 0.18
+  },
+  "_calls": 3000,
+  "_checks": 10500,
+  "_breaches": 1325,
+  "_promise_breaches": 290,
+  "_all_by_people_hours": 200.0
+ },
+ "api": {
+  "claims": 250,
+  "seats": 40,
+  "seats_taken": 40,
+  "double_bookings": 0,
+  "refused_full": 199
+ },
+ "gate": [
+  {
+   "name": "calls answered within 20 s",
+   "metric": "staffing.exchange.service_level",
+   "op": ">=",
+   "value": 0.9146,
+   "target": 0.8,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "half hours on the 80/20 target",
+   "metric": "staffing.exchange.intervals_on_target",
+   "op": ">=",
+   "value": 0.9152,
+   "target": 0.8,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "answered in surges nobody forecast",
+   "metric": "staffing.exchange.surge_service_level",
+   "op": ">=",
+   "value": 0.5837,
+   "target": 0.5,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "fewer abandoned calls than the fixed roster",
+   "metric": "staffing.exchange.abandoned_calls",
+   "op": "<",
+   "value": 1835,
+   "target": 7509,
+   "against": "staffing.fixed_roster.abandoned_calls",
+   "pass": true
+  },
+  {
+   "name": "call-outs lose fewer calls than planning alone",
+   "metric": "staffing.exchange.abandoned_calls",
+   "op": "<",
+   "value": 1835,
+   "target": 3997,
+   "against": "staffing.exchange_no_callouts.abandoned_calls",
+   "pass": true
+  },
+  {
+   "name": "talents earn at least 6 euro per logged hour",
+   "metric": "staffing.exchange.talent_eur_per_logged_hour",
+   "op": ">=",
+   "value": 6.21,
+   "target": 6.0,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "talents earn more in total than on the fixed roster",
+   "metric": "staffing.exchange.talent_eur",
+   "op": ">",
+   "value": 98736,
+   "target": 90488,
+   "against": "staffing.fixed_roster.talent_eur",
+   "pass": true
+  },
+  {
+   "name": "at most 1 in 10 talents gets under half the hours asked for",
+   "metric": "staffing.exchange.talents_under_half_of_ask",
+   "op": "<=",
+   "value": 0.031,
+   "target": 0.1,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "no talent paid a cent wrong",
+   "metric": "billing.product.talents_paid_wrong",
+   "op": "==",
+   "value": 0,
+   "target": 0,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "two claims never get one seat",
+   "metric": "api.double_bookings",
+   "op": "==",
+   "value": 0,
+   "target": 0,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "broken promises found",
+   "metric": "quality.product.promise_breach_recall",
+   "op": ">=",
+   "value": 1.0,
+   "target": 0.97,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "clean calls flagged",
+   "metric": "quality.product.false_flag_rate",
+   "op": "<=",
+   "value": 0.0003,
+   "target": 0.002,
+   "against": "fixed",
+   "pass": true
+  },
+  {
+   "name": "people read at most a quarter of what reading every call costs",
+   "metric": "quality.product.reviewer_share",
+   "op": "<=",
+   "value": 0.18,
+   "target": 0.25,
+   "against": "fixed",
+   "pass": true
+  }
+ ]
+}

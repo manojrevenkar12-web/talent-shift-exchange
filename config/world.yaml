@@ -1,0 +1,41 @@
+# World D1: a freelance contact-centre marketplace. Read only by tse/world. Written before the first result.
+name: D1
+seed: d1-market
+history_weeks: 3                # weeks of past volume the product may learn from
+weeks: 3                        # weeks the designs run
+quick_weeks: 1
+open: {from_hour: 8, to_hour: 20, interval_min: 30}
+shifts: [[8, 12], [12, 16], [16, 20]]
+
+projects:
+  telco_de:   {language: de, skill: inbound, aht_s: 330, acw_s: 60, base: 70, weekend: 0.6, guidelines: [greeting, identity, no_promise, closing]}
+  energy_de:  {language: de, skill: inbound, aht_s: 380, acw_s: 75, base: 45, weekend: 0.3, guidelines: [greeting, identity, closing]}
+  shop_en:    {language: en, skill: chat_sales, aht_s: 260, acw_s: 40, base: 55, weekend: 1.2, guidelines: [greeting, no_promise, closing]}
+  insure_fr:  {language: fr, skill: inbound, aht_s: 420, acw_s: 90, base: 25, weekend: 0.2, guidelines: [greeting, identity, no_promise, closing]}
+
+surges:                         # campaigns and outages nobody forecast
+  - {project: telco_de, week: 1, day: 2, from_hour: 10, hours: 5, factor: 1.8}
+  - {project: shop_en, week: 2, day: 5, from_hour: 14, hours: 4, factor: 1.7}
+  - {project: energy_de, week: 0, day: 0, from_hour: 8, hours: 3, factor: 1.6}
+
+talents:
+  count: 420
+  languages: {de: 0.62, en: 0.55, fr: 0.12}
+  noshow: [0.01, 0.18]          # each talent's own no-show rate, uniform in this range
+  hours_week: [8, 30]
+  certified_per_talent: [1, 2]
+  quality: [0.75, 0.99]         # chance of following each guideline on a call
+  standby_accept: 0.35          # chance a free, certified talent takes a call-out offer within the half hour
+
+billing:
+  eur_per_productive_min: 0.24
+  duplicate_events: 0.04        # the app resends an event after a timeout
+  late_events: 0.06             # events that arrive out of order
+  crash_sessions: 0.05          # the app dies and no logout arrives
+  clock_skew_s: 40              # device clocks are off by up to this much
+  pause_share: 0.12             # share of logged-in time on pause
+
+model:                          # the stand-in language model that reads call transcripts
+  miss: 0.12
+  false_flag: 0.04
+  calibration: 0.8

@@ -1,0 +1,15 @@
+# The release gate. Written after the first dev results and before the held-out world was run. Not moved afterwards.
+lines:
+  - {name: calls answered within 20 s, metric: staffing.exchange.service_level, op: '>=', value: 0.80}
+  - {name: half hours on the 80/20 target, metric: staffing.exchange.intervals_on_target, op: '>=', value: 0.80}
+  - {name: answered in surges nobody forecast, metric: staffing.exchange.surge_service_level, op: '>=', value: 0.50}
+  - {name: fewer abandoned calls than the fixed roster, metric: staffing.exchange.abandoned_calls, op: '<', ref: staffing.fixed_roster.abandoned_calls}
+  - {name: call-outs lose fewer calls than planning alone, metric: staffing.exchange.abandoned_calls, op: '<', ref: staffing.exchange_no_callouts.abandoned_calls}
+  - {name: talents earn at least 6 euro per logged hour, metric: staffing.exchange.talent_eur_per_logged_hour, op: '>=', value: 6.0}
+  - {name: talents earn more in total than on the fixed roster, metric: staffing.exchange.talent_eur, op: '>', ref: staffing.fixed_roster.talent_eur}
+  - {name: at most 1 in 10 talents gets under half the hours asked for, metric: staffing.exchange.talents_under_half_of_ask, op: '<=', value: 0.10}
+  - {name: no talent paid a cent wrong, metric: billing.product.talents_paid_wrong, op: '==', value: 0}
+  - {name: two claims never get one seat, metric: api.double_bookings, op: '==', value: 0}
+  - {name: broken promises found, metric: quality.product.promise_breach_recall, op: '>=', value: 0.97}
+  - {name: clean calls flagged, metric: quality.product.false_flag_rate, op: '<=', value: 0.002}
+  - {name: people read at most a quarter of what reading every call costs, metric: quality.product.reviewer_share, op: '<=', value: 0.25}

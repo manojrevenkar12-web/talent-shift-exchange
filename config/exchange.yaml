@@ -1,0 +1,22 @@
+# The exchange's settings. The world never reads this file.
+service: {target_share: 0.8, answer_within_s: 20, interval_s: 1800, shrinkage: 0.12}
+projects:                       # what the client contracted: language, skill and how long after-call work may take
+  telco_de:  {aht_s: 330, acw_cap_s: 180, guidelines: [greeting, identity, no_promise, closing]}
+  energy_de: {aht_s: 380, acw_cap_s: 225, guidelines: [greeting, identity, closing]}
+  shop_en:   {aht_s: 260, acw_cap_s: 120, guidelines: [greeting, no_promise, closing]}
+  insure_fr: {aht_s: 420, acw_cap_s: 270, guidelines: [greeting, identity, no_promise, closing]}
+forecast: {weeks: 3, trend: true}
+allocation:
+  reliability_prior: [9, 1]     # Beta prior on showing up: a new talent is trusted like one with 9 shows, 1 no-show
+  overbook_cap: 0.25            # never book more than this share above the need
+  fairness_weight: 1.0          # how much a talent's unmet requested hours raise their priority
+intraday:
+  surge_ratio: 1.25             # calls in the last half hour over forecast that count as a surge
+  callout_intervals: 4          # a call-out shift lasts two hours
+  max_offers_per_interval: 60
+qa:
+  confident: 0.85               # model findings at or above this confidence are decided without a person
+  review_minutes: 4
+billing:
+  eur_per_productive_min: 0.24
+  heartbeat_s: 300
