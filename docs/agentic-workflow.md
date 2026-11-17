@@ -21,9 +21,10 @@ The same setup is what a team would need to use coding agents safely on a produc
 
 - Erlang C staffing, the forecaster and the allocation passes, with tests, in one sitting.
 - The SQLAlchemy model. The agent put correctness in unique constraints rather than Python locks, so the claim race
-  is safe on SQLite and Postgres alike.
+  is safe on SQLite and Postgres alike. CI runs it on both.
 - Test scaffolding: the concurrent claim race, the out-of-order event cases, and the invariant tests.
-- The README generator and the dashboard's loading, error and empty states.
+- The README generator, the Prometheus metrics and Grafana dashboard, and the dashboard's loading, error and empty
+  states.
 
 ## Where it was wrong, and what caught it
 

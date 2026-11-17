@@ -1,12 +1,14 @@
 """The exchange's HTTP API: publish a week's slots, let talents claim them, take the apps' events and issue pay
-statements. Claims and events are safe to repeat; a statement for a period is issued once and then only read."""
+statements. Claims and events are safe to repeat; an issued statement row is never changed, late work adds a row."""
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -44,6 +46,23 @@ def create_app(url: str | None = None, cfg: dict | None = None) -> FastAPI:
     db = store.connect(url or os.environ.get("TSE_DB", "sqlite://"))
     app = FastAPI(title="talent-shift-exchange")
     app.state.db = db
+    reg = CollectorRegistry()           # one registry per app, so tests and workers do not share counters
+    claims = Counter("tse_claims", "Shift claims by outcome", ["outcome"], registry=reg)
+    events_c = Counter("tse_events", "App events received", ["outcome"], registry=reg)
+    statements_c = Counter("tse_statement_rows", "Statement rows written", ["kind"], registry=reg)
+    latency = Histogram("tse_request_seconds", "Request latency", ["route", "status"], registry=reg)
+
+    @app.middleware("http")
+    async def timed(request: Request, call_next):
+        t0 = time.perf_counter()
+        response = await call_next(request)
+        route = request.scope.get("route")
+        latency.labels(getattr(route, "path", "unmatched"), str(response.status_code)).observe(time.perf_counter() - t0)
+        return response
+
+    @app.get("/metrics")
+    def metrics():
+        return Response(generate_latest(reg), media_type=CONTENT_TYPE_LATEST)
 
     @app.get("/health")
     def health():
@@ -86,15 +105,21 @@ def create_app(url: str | None = None, cfg: dict | None = None) -> FastAPI:
     @app.post("/slots/{slot_id}/claim", status_code=201)
     def claim(slot_id: str, talent: str):
         try:
-            return {"slot": slot_id, "seat": store.claim(db, slot_id, talent)}
+            seat = store.claim(db, slot_id, talent)
         except store.Full:
+            claims.labels("full").inc()
             raise HTTPException(409, "this shift is full")
         except store.NotAllowed as e:
+            claims.labels("refused").inc()
             raise HTTPException(403, str(e))
+        claims.labels("seated").inc()
+        return {"slot": slot_id, "seat": seat}
 
     @app.post("/events")
     def events(batch: list[EventIn]):
         stored, repeats = store.store_events(db, [e.model_dump() for e in batch])
+        events_c.labels("stored").inc(stored)
+        events_c.labels("repeat").inc(repeats)
         return {"stored": stored, "repeats": repeats}
 
     @app.post("/statements/{week}")
@@ -117,6 +142,7 @@ def create_app(url: str | None = None, cfg: dict | None = None) -> FastAPI:
                                            productive_s=st.productive_s - paid_s, cents=st.cents - paid_c)
                 s.add(added)
                 s.commit()
+                statements_c.labels("statement" if added.version == 1 else "adjustment").inc()
         return {"talent": talent, "week": week, "productive_s": st.productive_s, "cents": st.cents,
                 "added": None if added is None else {"version": added.version, "cents": added.cents}}
 

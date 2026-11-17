@@ -1,17 +1,30 @@
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 
 from tse.product import db as store
 from tse.product.api import create_app
 
 
+def url(tmp_path, name: str) -> str:
+    """SQLite by default; CI also runs these against Postgres (TSE_TEST_DB), starting from empty tables."""
+    pg = os.environ.get("TSE_TEST_DB")
+    if not pg:
+        return f"sqlite:///{tmp_path}/{name}.db"
+    eng = create_engine(pg)
+    store.Base.metadata.drop_all(eng)
+    eng.dispose()
+    return pg
+
+
 def client(tmp_path):
-    return TestClient(create_app(f"sqlite:///{tmp_path}/x.db"))
+    return TestClient(create_app(url(tmp_path, "x")))
 
 
 def test_many_talents_racing_for_few_seats_fill_each_seat_once(tmp_path):
-    db = store.connect(f"sqlite:///{tmp_path}/race.db")
+    db = store.connect(url(tmp_path, "race"))
     with db() as s:
         s.add(store.Slot(id="s", project="telco_de", week=3, day=0, shift=0, seats=12))
         s.add_all(store.Talent(id=f"T{i}", certified=["telco_de"], hours_week=20) for i in range(80))
@@ -56,3 +69,16 @@ def test_claim_rules_events_and_statements(tmp_path):
     assert adj["added"] == {"version": 2, "cents": round(180 / 60 * 0.24 * 100)}            # late work, added on top
     assert c.post("/statements/4", params={"talent": "A"}).status_code == 404               # week 4 pays nothing of week 3
     assert c.post("/slots", json=[{"project": "nope", "week": 3, "day": 0, "shift": 0, "seats": 1}]).status_code == 422
+
+
+def test_metrics_count_what_happened(tmp_path):
+    c = client(tmp_path)
+    c.post("/talents", json={"id": "A", "certified": ["telco_de"], "hours_week": 20})
+    sid = c.post("/slots", json=[{"project": "telco_de", "week": 3, "day": 0, "shift": 0, "seats": 1}]).json()["slots"][0]
+    c.post(f"/slots/{sid}/claim", params={"talent": "A"})
+    ev = {"id": "A-3-0-0-1", "talent": "A", "project": "telco_de", "seq": 1, "kind": "call_start", "ts": 0}
+    c.post("/events", json=[ev, ev])
+    text = c.get("/metrics").text
+    assert 'tse_claims_total{outcome="seated"} 1.0' in text
+    assert 'tse_events_total{outcome="repeat"} 1.0' in text
+    assert 'tse_request_seconds_count{route="/slots/{slot_id}/claim",status="201"} 1.0' in text

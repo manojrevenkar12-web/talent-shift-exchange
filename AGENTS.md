@@ -10,7 +10,9 @@ settings:
 python -m tse.eval.cli evaluate && python -m tse.eval.cli readme && cp reports/dev.json web/public/dev.json
 ```
 
-and commit `reports/dev.json`, `web/public/dev.json` and `README.md`. CI checks that the README matches the reports.
+and commit `reports/dev.json`, `web/public/dev.json` and `README.md`. CI checks that the README matches the reports,
+that a fresh run reproduces `reports/dev.json` exactly, and runs the API tests against Postgres. `pre-commit install`
+runs ruff, the fast tests and the README check before each commit.
 
 ## Layout
 
@@ -21,6 +23,7 @@ and commit `reports/dev.json`, `web/public/dev.json` and `README.md`. CI checks 
 | `tse/eval` | the designs, the weekly run, scoring, gate, README, CLI | everything |
 | `web` | the dashboard: React, TypeScript, Motion, feature-first, reads `public/dev.json` | the report |
 | `config` | world files, the exchange's settings, the gate | |
+| `ops` | Prometheus scrape config, Grafana provisioning and dashboard, used by `docker-compose.yml` | |
 
 ## Invariants (checked in the tests)
 

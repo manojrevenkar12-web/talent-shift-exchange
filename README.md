@@ -11,8 +11,10 @@ hour; freelance talents pick the shifts they want from home; the platform has to
 - **checks calls** against each client's guidelines: rules for fixed phrases, a model for promises an agent may not
   make, and a person for every call the model is not sure about.
 
-A FastAPI service with SQLAlchemy carries the claims and the ledger. A seat is a database row, so two talents tapping
-the last seat at once cannot both get it. Everything is measured against a simulated marketplace
+A FastAPI service with SQLAlchemy carries the claims and the ledger, on Postgres in production and SQLite in tests;
+CI runs the claim race on both. A seat is a database row, so two talents tapping the last seat at once cannot both get
+it. The API exports Prometheus metrics (claims by outcome, repeated events, statement rows, latency by route), and
+`docker compose up` starts it with Postgres, Prometheus and a Grafana dashboard. Everything is measured against a simulated marketplace
 (420 talents, 4 client projects in German, English and French, 3 weeks) and a held-out
 marketplace that was run once.
 
@@ -113,6 +115,8 @@ pip install -r requirements.txt
 python -m pytest -q                                # staffing, ledger, call checks, API race, invariants: seconds
 python -m tse.eval.cli evaluate                    # three staffing designs, ledger, call checks and the gate
 TSE_SERVE=1 uvicorn tse.product.api:app            # the API, on SQLite in memory unless TSE_DB is set
+docker compose up --build                          # API on Postgres, Prometheus :9090, Grafana :3000
+pre-commit install                                 # ruff, the fast tests and the README check before each commit
 cd web && npm ci && npm run dev                    # the dashboard
 ```
 
@@ -120,7 +124,8 @@ Where things live:
 - `tse/world`: the marketplace and its truth, including the stand-in model;
 - `tse/product`: what would ship, which never imports the world;
 - `tse/eval`: designs, scoring, gate and this README;
-- `web`: the dashboard, which reads the same reports.
+- `web`: the dashboard, which reads the same reports;
+- `ops`: Prometheus scrape config and the Grafana dashboard.
 
 [docs/agentic-workflow.md](docs/agentic-workflow.md) describes how this was built with a coding agent: where it
 helped, where it went wrong, and the checks that caught it.

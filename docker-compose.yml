@@ -1,0 +1,22 @@
+# The exchange as it would run: the API on Postgres, scraped by Prometheus, with a Grafana dashboard on :3000.
+services:
+  db:
+    image: postgres:16
+    environment: {POSTGRES_USER: tse, POSTGRES_PASSWORD: tse, POSTGRES_DB: tse}
+    healthcheck: {test: ["CMD", "pg_isready", "-U", "tse"], interval: 5s, retries: 10}
+  api:
+    build: .
+    environment: {TSE_DB: "postgresql+psycopg://tse:tse@db:5432/tse"}
+    depends_on: {db: {condition: service_healthy}}
+    ports: ["8000:8000"]
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes: ["./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment: {GF_AUTH_ANONYMOUS_ENABLED: "true", GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer}
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]

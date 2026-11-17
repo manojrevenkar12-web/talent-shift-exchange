@@ -3,14 +3,32 @@ on: [push, pull_request]
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix: { python: ["3.11", "3.13"] }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.13" }
+        with: { python-version: "${{ matrix.python }}" }
       - run: pip install -r requirements.txt ruff
       - run: ruff check tse tests --select E,F,W,I
       - run: python -m pytest -q
       - run: python -m tse.eval.cli readme --check
+  postgres:
+    # the claim race, idempotent events and statements against Postgres, not only SQLite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: tse, POSTGRES_PASSWORD: tse, POSTGRES_DB: tse }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U tse" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q tests/test_api.py
+        env: { TSE_TEST_DB: "postgresql+psycopg://tse:tse@localhost:5432/tse" }
   evaluate:
     # the whole dev run is deterministic, so CI reproduces the committed report exactly
     runs-on: ubuntu-latest
@@ -26,7 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t tse .
+      - run: docker compose config -q
+      - run: docker compose up -d --build --wait db api
+      - run: curl -fsS localhost:8000/health && curl -fsS localhost:8000/metrics | grep -q tse_request_seconds
+      - run: docker compose down
   dashboard:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: web } }

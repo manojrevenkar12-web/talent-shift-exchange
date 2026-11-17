@@ -70,6 +70,8 @@ def connect(url: str = "sqlite://") -> sessionmaker:
         if url in ("sqlite://", "sqlite:///:memory:"):
             from sqlalchemy.pool import StaticPool
             kw["poolclass"] = StaticPool
+    elif url.startswith("postgresql"):
+        kw = {"pool_size": 40, "max_overflow": 0}       # enough connections for a burst of claims
     engine = create_engine(url, **kw)
     if url.startswith("sqlite"):
         @event.listens_for(engine, "connect")

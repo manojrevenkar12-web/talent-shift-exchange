@@ -1,0 +1,19 @@
+# pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.3
+    hooks:
+      - id: ruff
+        args: [--select, "E,F,W,I"]
+  - repo: local
+    hooks:
+      - id: tests
+        name: fast tests
+        entry: python -m pytest -q
+        language: system
+        pass_filenames: false
+      - id: readme
+        name: README matches the reports
+        entry: python -m tse.eval.cli readme --check
+        language: system
+        pass_filenames: false
