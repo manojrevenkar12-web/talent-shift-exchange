@@ -97,22 +97,28 @@ def create_app(url: str | None = None, cfg: dict | None = None) -> FastAPI:
         stored, repeats = store.store_events(db, [e.model_dump() for e in batch])
         return {"stored": stored, "repeats": repeats}
 
-    @app.post("/statements/{period}")
-    def statements(period: str, talent: str):
+    @app.post("/statements/{week}")
+    def statements(week: int, talent: str):
+        """Pay for the work done in a week. Issued rows are never changed: events that arrive after the statement
+        add an adjustment row with the difference, and asking again with nothing new adds nothing."""
         with db() as s:
-            done = s.scalar(select(store.StatementRow).where(store.StatementRow.talent == talent,
-                                                             store.StatementRow.period == period))
-            if done:
-                return {"talent": talent, "period": period, "productive_s": done.productive_s, "cents": done.cents,
-                        "issued": False}
+            rows = s.scalars(select(store.StatementRow).where(store.StatementRow.talent == talent,
+                                                              store.StatementRow.period == str(week))).all()
             evs = [{"id": e.id, "talent": e.talent, "project": e.project, "seq": e.seq, "kind": e.kind, "ts": e.ts}
                    for e in s.scalars(select(store.Event).where(store.Event.talent == talent))]
-            st = billing.statements(evs, period, cfg).get(talent)
+            evs = [e for e in evs if billing.session_week(e) == week]
+            st = billing.statements(evs, str(week), cfg).get(talent)
             if st is None:
-                raise HTTPException(404, "no events for this talent")
-            s.add(store.StatementRow(talent=talent, period=period, productive_s=st.productive_s, cents=st.cents))
-            s.commit()
-        return {"talent": talent, "period": period, "productive_s": st.productive_s, "cents": st.cents, "issued": True}
+                raise HTTPException(404, "no work recorded for this talent in this week")
+            paid_c, paid_s = sum(r.cents for r in rows), sum(r.productive_s for r in rows)
+            added = None
+            if st.cents != paid_c or not rows:
+                added = store.StatementRow(talent=talent, period=str(week), version=len(rows) + 1,
+                                           productive_s=st.productive_s - paid_s, cents=st.cents - paid_c)
+                s.add(added)
+                s.commit()
+        return {"talent": talent, "week": week, "productive_s": st.productive_s, "cents": st.cents,
+                "added": None if added is None else {"version": added.version, "cents": added.cents}}
 
     return app
 

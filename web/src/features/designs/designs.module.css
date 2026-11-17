@@ -1,0 +1,9 @@
+.scroller { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.table th, .table td { text-align: left; vertical-align: top; padding: var(--space-3) var(--space-4) var(--space-3) 0; border-bottom: 1px solid var(--rule); }
+.table thead th { font-weight: 700; white-space: nowrap; }
+.table tbody th { font-weight: 400; color: var(--ink-soft); max-width: 22ch; }
+.table td { min-width: 10rem; }
+.table td > div { margin-top: var(--space-2); }
+.key { display: inline-block; width: var(--space-3); height: var(--space-3); border-radius: var(--radius-sm); margin-right: var(--space-2); vertical-align: baseline; }
+.held { color: var(--ink-soft); max-width: var(--measure); margin: var(--space-6) 0 0; }

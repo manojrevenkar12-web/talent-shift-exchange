@@ -1,0 +1,40 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -r requirements.txt ruff
+      - run: ruff check tse tests --select E,F,W,I
+      - run: python -m pytest -q
+      - run: python -m tse.eval.cli readme --check
+  evaluate:
+    # the whole dev run is deterministic, so CI reproduces the committed report exactly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -r requirements.txt
+      - run: cp reports/dev.json /tmp/committed.json && python -m tse.eval.cli evaluate
+      - run: python -c "import json; a=json.load(open('/tmp/committed.json')); b=json.load(open('reports/dev.json')); assert a==b, 'reports/dev.json does not match a fresh run'"
+      - run: python -m tse.eval.cli gate
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t tse .
+  dashboard:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

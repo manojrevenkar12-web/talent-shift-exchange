@@ -46,9 +46,13 @@ def test_claim_rules_events_and_statements(tmp_path):
     evs = [{"id": f"A-3-0-0-{k}", "talent": "A", "project": "telco_de", "seq": k, "kind": kind, "ts": ts}
            for k, kind, ts in [(1, "call_start", 0), (2, "call_end", 300), (3, "acw_end", 360)]]
     assert c.post("/events", json=evs + evs[:1]).json() == {"stored": 3, "repeats": 1}
-    first = c.post("/statements/2026-W47", params={"talent": "A"}).json()
-    assert first["cents"] == round(360 / 60 * 0.24 * 100) and first["issued"]
-    c.post("/events", json=[{**evs[0], "id": "A-3-0-0-9", "seq": 9}])
-    again = c.post("/statements/2026-W47", params={"talent": "A"}).json()
-    assert again["cents"] == first["cents"] and not again["issued"]            # issued once, then only read
+    first = c.post("/statements/3", params={"talent": "A"}).json()
+    assert first["cents"] == round(360 / 60 * 0.24 * 100) and first["added"]["version"] == 1
+    assert c.post("/statements/3", params={"talent": "A"}).json()["added"] is None          # nothing new, nothing added
+    late = [{"id": f"A-3-0-0-{k}", "talent": "A", "project": "telco_de", "seq": k, "kind": kind, "ts": ts}
+            for k, kind, ts in [(4, "call_start", 1000), (5, "call_end", 1120), (6, "acw_end", 1180)]]
+    c.post("/events", json=late)
+    adj = c.post("/statements/3", params={"talent": "A"}).json()
+    assert adj["added"] == {"version": 2, "cents": round(180 / 60 * 0.24 * 100)}            # late work, added on top
+    assert c.post("/statements/4", params={"talent": "A"}).status_code == 404               # week 4 pays nothing of week 3
     assert c.post("/slots", json=[{"project": "nope", "week": 3, "day": 0, "shift": 0, "seats": 1}]).status_code == 422

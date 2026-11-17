@@ -36,6 +36,7 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
     asked_h, got_h = defaultdict(float), defaultdict(float)
     callout_offers = callout_taken = 0
     sessions = []                      # (talent, project, week, day, shift, occupancy) for billing
+    grid = defaultdict(lambda: [0, 0.0, 0, 0])   # (week, day, iv) -> calls, answered in time, on the phone, called out
     booked_total = need_total = noshows = 0
     for week in range(H, H + w.weeks):
         plan = fixed_plan(ex, fc, week, projects) if design == "fixed_roster" else ex.plan(week, fc, projects)
@@ -50,6 +51,7 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
             for t in tids:
                 got_h[t] += 4
         for day in range(7):
+            callouts: dict[str, list[tuple[str, int]]] = {p: [] for p in projects}   # (talent, interval offered)
             for s, (h0, h1) in enumerate(w.cfg["shifts"]):
                 present, working = {}, set()
                 for p in projects:
@@ -63,16 +65,18 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
                             working.add(t)
                         else:
                             noshows += 1
-                callouts: dict[str, list[tuple[str, int]]] = {p: [] for p in projects}   # (talent, last interval)
+                for p in projects:              # a call-out that runs into the next shift keeps going
+                    callouts[p] = [(t, k) for t, k in callouts[p] if t not in working]
+                    working.update(t for t, _ in callouts[p])
                 ivs = [iv for iv in range(len(w.intervals)) if ex.shift_of(iv) == s]
                 occ_acc = defaultdict(list)
                 ci = cfg["intraday"]["callout_intervals"]
                 for iv in ivs:
                     for p in projects:
-                        # a call-out offered at interval k works k+1 .. k+ci; offers end with the shift
+                        # a call-out offered at interval k works k+1 .. k+ci, into the next shift if need be
                         callouts[p] = [(t, k) for t, k in callouts[p] if iv <= k + ci]
                         on = present[p] + [t for t, k in callouts[p] if k < iv]
-                        if callout_on and iv > 0 and iv < ivs[-1]:
+                        if callout_on and iv > 0 and iv < len(w.intervals) - 1:
                             prev = iv - 1          # calls the phone system counted in the half hour just ended
                             free = [t.id for t in w.talents if t.id not in working and p in t.certified]
                             offers, _ = ex.callouts(p, iv, m.calls(w, p, week, day, prev),
@@ -80,7 +84,9 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
                                                     len(present[p]) + len(callouts[p]), free)
                             callout_offers += len(offers)
                             for t in offers:
-                                if m.accepts_callout(w, t, week, day, iv):
+                                took = m.accepts_callout(w, t, week, day, iv)
+                                ex.record_offer(took)
+                                if took:
                                     callouts[p].append((t, iv))
                                     working.add(t)
                                     callout_taken += 1
@@ -90,6 +96,11 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
                         sl, ab = m.erlang_c_service(eff, c, aht, 1800, cfg["service"]["answer_within_s"])
                         calls_tot += c
                         answered += sl * c
+                        g = grid[(week - H, day, iv)]
+                        g[0] += c
+                        g[1] += sl * c
+                        g[2] += len(on)
+                        g[3] += len(on) - len(present[p])
                         abandoned += ab * c
                         iv_n += 1
                         iv_ok += sl >= cfg["service"]["target_share"]
@@ -129,6 +140,8 @@ def staffing(w, cfg, design: str, fc: Forecaster, projects: list[str], log) -> d
         "noshows": noshows,
         "callout_offers": callout_offers,
         "callouts_taken": callout_taken,
+        "grid": [[k[0], k[1], k[2], v[0], round(v[1] / v[0], 3) if v[0] else 1.0, v[2], v[3]]
+                 for k, v in sorted(grid.items())],
         "_sessions": sessions,
     }
 
@@ -246,7 +259,7 @@ def race(talents: int = 200, seats: int = 40, workers: int = 32) -> dict:
         db.kw["bind"].dispose()
     return {"claims": len(order), "seats": seats, "seats_taken": len(rows),
             "double_bookings": sum(n - 1 for _, n in rows if n > 1) + sum(n - 1 for _, n in holders if n > 1),
-            "refused_full": sum(r is None for r in res)}
+            "talents_with_a_seat": len(holders), "lost_claims": len(order) - sum(r is not None for r in res) > 0}
 
 
 def evaluate(world_file: str = "config/world.yaml", quick: bool = False, log=print) -> dict:
@@ -273,6 +286,9 @@ def evaluate(world_file: str = "config/world.yaml", quick: bool = False, log=pri
     api = race()
     log(f"claim race done ({time.perf_counter() - t0:.0f} s)")
     return {"world": w.name, "weeks": w.weeks, "talents": len(w.talents), "projects": projects,
+            "intervals": [f"{h:02d}:{mi:02d}" for h, mi in w.intervals],
+            "surges": [{k: x[k] for k in ("project", "week", "day", "from_hour", "hours", "factor")}
+                       for x in w.cfg["surges"]],
             "staffing": staff, "billing": billing_rep, "quality": qrep, "api": api}
 
 

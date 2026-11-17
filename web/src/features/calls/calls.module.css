@@ -1,0 +1,6 @@
+.list { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--space-8); }
+.way { display: grid; gap: var(--space-3); align-content: start; }
+.name { margin: 0; font-weight: 400; color: var(--ink-soft); }
+.way[data-product="true"] .name { font-weight: 700; color: var(--ink); }
+.measure { display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+.small { margin: 0; font-size: var(--text-sm); color: var(--ink-soft); }

@@ -14,6 +14,7 @@ intraday:
   surge_ratio: 1.25             # calls in the last half hour over forecast that count as a surge
   callout_intervals: 4          # a call-out shift lasts two hours
   max_offers_per_interval: 60
+  accept_prior: [1, 2]          # before any offers, expect one talent in three to take a call-out
 qa:
   confident: 0.85               # model findings at or above this confidence are decided without a person
   review_minutes: 4

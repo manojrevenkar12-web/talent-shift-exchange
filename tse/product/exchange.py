@@ -3,6 +3,7 @@ reliability and fairness, book a little over the need where no-shows are expecte
 a half hour runs hotter than planned."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from tse.product.forecast import Forecaster
@@ -31,6 +32,7 @@ class Exchange:
         a, b = cfg["allocation"]["reliability_prior"]
         self.shows = {p.id: [a, b] for p in profiles}            # Beta(shows, no-shows)
         self.granted_hours: dict[str, float] = {}
+        self.offers = list(cfg["intraday"]["accept_prior"])      # Beta(accepted, declined) over all call-out offers
         self.requested_hours: dict[str, float] = {}
 
     # -------------------------------------------------------------- planning
@@ -103,6 +105,13 @@ class Exchange:
         return booked
 
     # -------------------------------------------------------------- intraday
+    def record_offer(self, accepted: bool) -> None:
+        self.offers[0 if accepted else 1] += 1
+
+    def accept_rate(self) -> float:
+        a, b = self.offers
+        return a / (a + b)
+
     def callouts(self, project: str, iv: int, observed_prev: float, forecast_prev: float, forecast_now: float,
                  staffed: int, free: list[str]) -> tuple[list[str], dict]:
         """Who to offer a call-out shift to now, and why."""
@@ -115,5 +124,5 @@ class Exchange:
         if short <= 0:
             return [], info
         cands = sorted((t for t in free if project in self.profiles[t].certified), key=lambda t: -self.reliability(t))
-        k = min(len(cands), c["max_offers_per_interval"], int(short * 3))
+        k = min(len(cands), c["max_offers_per_interval"], math.ceil(short / max(self.accept_rate(), 0.05)))
         return cands[:k], info

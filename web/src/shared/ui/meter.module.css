@@ -1,0 +1,2 @@
+.track { height: var(--meter); background: var(--paper-raised); border-radius: var(--radius-sm); overflow: hidden; }
+.fill { height: 100%; border-radius: var(--radius-sm); transform-origin: left center; }

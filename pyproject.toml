@@ -9,3 +9,6 @@ line-length = 130
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff.lint.per-file-ignores]
+"tse/eval/readme.py" = ["E501"]   # markdown tables are one line each

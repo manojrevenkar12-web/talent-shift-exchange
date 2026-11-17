@@ -54,12 +54,13 @@ class Event(Base):
 
 class StatementRow(Base):
     __tablename__ = "statements"
-    __table_args__ = (UniqueConstraint("talent", "period"),)
+    __table_args__ = (UniqueConstraint("talent", "period", "version"),)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     talent: Mapped[str] = mapped_column(String)
-    period: Mapped[str] = mapped_column(String)
-    productive_s: Mapped[int] = mapped_column(Integer)
-    cents: Mapped[int] = mapped_column(Integer)
+    period: Mapped[str] = mapped_column(String)          # the week the work was done in
+    version: Mapped[int] = mapped_column(Integer)        # 1 is the statement, 2.. are adjustments for late events
+    productive_s: Mapped[int] = mapped_column(Integer)   # added in this row
+    cents: Mapped[int] = mapped_column(Integer)          # added in this row; issued rows are never changed
 
 
 def connect(url: str = "sqlite://") -> sessionmaker:

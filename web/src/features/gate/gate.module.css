@@ -1,0 +1,6 @@
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.table th, .table td { text-align: left; padding: var(--space-2) var(--space-4) var(--space-2) 0; border-bottom: 1px solid var(--rule); }
+.table thead th { color: var(--ink-soft); font-weight: 400; }
+.table tbody th { font-weight: 400; }
+.table td[data-pass="true"] { color: var(--sl-on); font-weight: 700; }
+.table td[data-pass="false"] { color: var(--sl-lost); font-weight: 700; }

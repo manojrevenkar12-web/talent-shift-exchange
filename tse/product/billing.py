@@ -21,6 +21,11 @@ def session_key(e: dict) -> str:
     return e["id"].rsplit("-", 1)[0]
 
 
+def session_week(e: dict) -> int:
+    """The app names each event talent-week-day-shift-seq; a session's pay belongs to the week it was worked."""
+    return int(session_key(e).rsplit("-", 3)[1])
+
+
 def fold(events: list[dict], acw_cap: dict[str, int]) -> dict[str, dict]:
     """session -> productive seconds, from deduplicated events in sequence order."""
     seen, sessions = set(), defaultdict(list)

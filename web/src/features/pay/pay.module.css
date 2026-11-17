@@ -1,0 +1,6 @@
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.table th, .table td { text-align: left; padding: var(--space-3) var(--space-4) var(--space-3) 0; border-bottom: 1px solid var(--rule); }
+.table thead th { color: var(--ink-soft); font-weight: 400; }
+.table tbody th { font-weight: 400; }
+.table tr[data-product="true"] th, .table tr[data-product="true"] td { font-weight: 700; }
+.claims { color: var(--ink-soft); max-width: var(--measure); margin: var(--space-6) 0 0; }

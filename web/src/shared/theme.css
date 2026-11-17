@@ -1,0 +1,62 @@
+/* Every colour, size, gap and duration the dashboard uses. Components read these, never literals.
+   The palette is a supervisor's wallboard: a half hour on target, just under, short, or lost. */
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+
+:root {
+  --paper: #eef1f2;
+  --paper-raised: #f8fafa;
+  --ink: #16202a;
+  --ink-soft: #56636e;
+  --rule: #cfd7dc;
+  --focus: #2f5f8a;
+
+  /* share of calls answered within 20 s in a half hour */
+  --sl-on: #24786a;
+  --sl-near: #8fc2b3;
+  --sl-short: #e3a33b;
+  --sl-lost: #b03a4a;
+  --sl-quiet: #dfe5e8;
+  --surge: #16202a;
+
+  /* the designs, where a series needs telling apart */
+  --design-fixed: #8a96a0;
+  --design-plan: #6f9fc2;
+  --design-exchange: #24786a;
+
+  --font: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.375rem;
+  --text-xl: 2rem;
+  --text-hero: clamp(2rem, 4.2vw, 3.4rem);
+  --leading: 1.5;
+  --leading-tight: 1.08;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --measure: 66ch;
+  --page: 78rem;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --meter: 0.625rem;
+  --cell-w: 1.5rem;
+  --cell-h: 0.8rem;
+  --cell-gap: 2px;
+  --week-gap: 0.75rem;
+  --panel: 19rem;
+  --fade: 240ms;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); font-family: var(--font); line-height: var(--leading); }
+body { margin: 0; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.tabular { font-variant-numeric: tabular-nums; }

@@ -1,0 +1,17 @@
+.skeleton { display: grid; gap: var(--space-4); padding: var(--space-8) 0; }
+.bone {
+  height: var(--space-12);
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--paper-raised), var(--rule), var(--paper-raised));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .bone { animation: none; } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.panel { max-width: var(--measure); padding: var(--space-8) 0; }
+.title { font-size: var(--text-lg); font-weight: 650; margin: 0 0 var(--space-2); }
+.body { color: var(--ink-soft); margin: 0 0 var(--space-4); }
+.button {
+  font: inherit; font-weight: 600; color: var(--paper-raised); background: var(--ink);
+  border: 0; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); cursor: pointer;
+}
